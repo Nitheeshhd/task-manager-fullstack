@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import API from "./api";
 
 export default function Dashboard({ token }) {
@@ -11,14 +11,24 @@ export default function Dashboard({ token }) {
   };
 
   // ✅ FETCH TASKS
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const res = await API.get("/tasks", { headers });
       setTasks(res.data);
     } catch (err) {
       console.log(err);
     }
-  };
+  }, [token]);
+
+  // ✅ FETCH ANALYTICS
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const res = await API.get("/tasks/analytics", { headers });
+      setAnalytics(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [token]);
 
   // ✅ CREATE TASK
   const createTask = async () => {
@@ -35,7 +45,7 @@ export default function Dashboard({ token }) {
         { headers }
       );
 
-      setTitle(""); // clear input
+      setTitle("");
       fetchTasks();
       fetchAnalytics();
     } catch (err) {
@@ -43,7 +53,7 @@ export default function Dashboard({ token }) {
     }
   };
 
-  // ✅ UPDATE TASK (MARK DONE)
+  // ✅ UPDATE TASK
   const updateTask = async (id) => {
     try {
       await API.put(
@@ -70,32 +80,22 @@ export default function Dashboard({ token }) {
     }
   };
 
-  // ✅ FETCH ANALYTICS
-  const fetchAnalytics = async () => {
-    try {
-      const res = await API.get("/tasks/analytics", { headers });
-      setAnalytics(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   // ✅ INITIAL LOAD
   useEffect(() => {
     fetchTasks();
     fetchAnalytics();
-  }, []);
+  }, [fetchTasks, fetchAnalytics]);
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h2>Dashboard</h2>
 
       {/* 🔥 ANALYTICS */}
       <div style={{ marginBottom: "20px" }}>
         <h3>Analytics</h3>
-        <p>Total: {analytics.total}</p>
-        <p>Completed: {analytics.completed}</p>
-        <p>Pending: {analytics.pending}</p>
+        <p>Total: {analytics.total || 0}</p>
+        <p>Completed: {analytics.completed || 0}</p>
+        <p>Pending: {analytics.pending || 0}</p>
       </div>
 
       {/* 🔥 CREATE TASK */}
@@ -103,6 +103,7 @@ export default function Dashboard({ token }) {
         placeholder="Task title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        style={{ padding: "8px", marginRight: "10px" }}
       />
 
       <button onClick={createTask}>Add Task</button>
